@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bantotal — Analizador de Envíos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Syne:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <aside class="sidebar">
+    <div class="logo">
+      <span class="logo-dot"></span>
+      <span class="logo-text">ENVÍOS<br><small>BANTOTAL</small></span>
+    </div>
+    <nav class="nav">
+      <button class="nav-item active" data-view="input">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+        </svg>
+        Ingresar
+      </button>
+      <button class="nav-item" data-view="dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <rect x="3" y="3" width="7" height="7" rx="1" />
+          <rect x="14" y="3" width="7" height="7" rx="1" />
+          <rect x="14" y="14" width="7" height="7" rx="1" />
+          <rect x="3" y="14" width="7" height="7" rx="1" />
+        </svg>
+        Dashboard
+      </button>
+
+      <button class="nav-item" data-view="single">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+        </svg>
+        Buscar envío
+      </button>
+
+    </nav>
+    <div class="sidebar-footer">
+      <span class="status-dot" id="statusDot"></span>
+      <span id="statusText">Listo</span>
+    </div>
+
+  </aside>
+
+  <main class="main">
+
+    <!-- VIEW: INPUT -->
+    <section class="view active" id="view-input">
+      <header class="view-header">
+        <h1>Nuevo análisis</h1>
+        <p>Pegá el texto con los envíos y configurá las credenciales</p>
+      </header>
+
+      <div class="input-grid">
+
+        <!-- COLUMNA IZQUIERDA -->
+        <div class="card cred-card">
+
+          <div class="card-label">CONFIGURACIÓN (.env)</div>
+          <div style="font-size:12px;color:var(--text2);margin-bottom:12px">
+            <div>RAR PASS: <span id="cfgRar">-</span></div>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label>Usuario</label>
+              <input type="text" id="inputUser" placeholder="Usuario">
+            </div>
+            <div class="field">
+              <label>Contraseña</label>
+              <input type="text" id="inputPass" placeholder="Contraseña">
+            </div>
+          </div>
+
+        </div>
+
+        <!-- COLUMNA DERECHA -->
+        <div class="card text-card">
+          <div class="card-label">
+            TEXTO DE ENVÍOS <span class="fmt-badge">FMT 1 + FMT 2</span>
+          </div>
+
+          <textarea id="inputText" placeholder="Ingrese los envios">
+    </textarea>
+
+          <div class="parsed-preview" id="parsedPreview"></div>
+        </div>
+
+      </div>
+      <div class="action-bar">
+        <div class="envios-count" id="enviosCount">— envíos detectados</div>
+
+        <button class="btn-run" id="btnRun" disabled>
+          <span>Iniciar análisis</span>
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M5 3l14 9-14 9V3z" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="log-panel" id="logPanel" style="display:none">
+        <div class="log-header">
+          <span>LOG EN TIEMPO REAL</span>
+          <div class="spinner" id="spinner"></div>
+        </div>
+        <div class="log-body" id="logBody"></div>
+      </div>
+    </section>
+
+    <section class="view" id="view-single">
+      <header class="view-header">
+        <h1>Buscar envío</h1>
+      </header>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Nro</label>
+          <input type="text" id="singleEnvio" placeholder="Número de envío">
+          <div class="action-bar">
+            <button class="btn-run" id="btnBuscar">
+              <span>BUSCAR</span>
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M5 3l14 9-14 9V3z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div id="singleResult"></div>
+    </section>
+
+    <!-- VIEW: DASHBOARD -->
+    <section class="view" id="view-dashboard">
+      <header class="view-header">
+        <h1>Dashboard</h1>
+        <p id="dashSubtitle">Ejecutá un análisis para ver resultados</p>
+      </header>
+
+      <div class="stats-row" id="statsRow" style="display:none">
+        <div class="stat-card">
+          <div class="stat-val" id="st-total">0</div>
+          <div class="stat-lbl">Procesados</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" id="st-skip">0</div>
+          <div class="stat-lbl">100% skipped</div>
+        </div>
+        <div class="stat-card accent-warn">
+          <div class="stat-val" id="st-sql">0</div>
+          <div class="stat-lbl">Con scripts SQL</div>
+        </div>
+        <div class="stat-card accent-danger">
+          <div class="stat-val" id="st-ddl">0</div>
+          <div class="stat-lbl">Con DROP/CREATE TABLE</div>
+        </div>
+      </div>
+
+      <div class="results-wrap" id="resultsWrap" style="display:none">
+        <div class="results-toolbar">
+          <input class="search-input" id="searchInput" placeholder="Buscar envío o ticket…">
+          <div class="filter-pills">
+            <button class="pill active" data-filter="all" onclick="setFilter('all',this)">Todos</button>
+            <button class="pill" data-filter="ddl" onclick="setFilter('ddl',this)">DROP/CREATE</button>
+            <button class="pill" data-filter="sql" onclick="setFilter('sql',this)">Con SQL</button>
+            <button class="pill" data-filter="skip" onclick="setFilter('skip',this)">Skipped</button>
+          </div>
+        </div>
+
+        <table class="results-table">
+          <thead>
+            <tr>
+              <th>Envío</th>
+              <th>Ticket</th>
+              <th>Progreso</th>
+              <th>Scripts SQL</th>
+              <th>DROP TABLE</th>
+              <th>CREATE TABLE</th>
+            </tr>
+          </thead>
+          <tbody id="resultsTbody"></tbody>
+        </table>
+      </div>
+
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">◈</div>
+        <p>Sin resultados aún.<br>Ingresá envíos y ejecutá el análisis.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
+
+</html>
