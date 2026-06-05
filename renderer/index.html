@@ -24,7 +24,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
           <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
         </svg>
-        Ingresar
+        Analizar Envíos
       </button>
       <button class="nav-item" data-view="dashboard">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -57,45 +57,20 @@
     <section class="view active" id="view-input">
       <header class="view-header">
         <h1>Nuevo análisis</h1>
-        <p>Pegá el texto con los envíos y configurá las credenciales</p>
+        <p>Pegá el texto con los envíos</p>
       </header>
 
-      <div class="input-grid">
-
-        <!-- COLUMNA IZQUIERDA -->
-        <div class="card cred-card">
-
-          <div class="card-label">CONFIGURACIÓN (.env)</div>
-          <div style="font-size:12px;color:var(--text2);margin-bottom:12px">
-            <div>RAR PASS: <span id="cfgRar">-</span></div>
-          </div>
-
-          <div class="field-row">
-            <div class="field">
-              <label>Usuario</label>
-              <input type="text" id="inputUser" placeholder="Usuario">
-            </div>
-            <div class="field">
-              <label>Contraseña</label>
-              <input type="text" id="inputPass" placeholder="Contraseña">
-            </div>
-          </div>
-
+      <!-- COLUMNA DERECHA -->
+      <div class="card text-card">
+        <div class="card-label">
+          TEXTO DE ENVÍOS <span class="fmt-badge">FMT 1 + FMT 2</span>
         </div>
 
-        <!-- COLUMNA DERECHA -->
-        <div class="card text-card">
-          <div class="card-label">
-            TEXTO DE ENVÍOS <span class="fmt-badge">FMT 1 + FMT 2</span>
-          </div>
+        <textarea id="inputText" placeholder="Ingrese los envios"></textarea>
 
-          <textarea id="inputText" placeholder="Ingrese los envios">
-    </textarea>
-
-          <div class="parsed-preview" id="parsedPreview"></div>
-        </div>
-
+        <div class="parsed-preview" id="parsedPreview"></div>
       </div>
+
       <div class="action-bar">
         <div class="envios-count" id="enviosCount">— envíos detectados</div>
 
@@ -135,7 +110,7 @@
           </div>
         </div>
       </div>
-      <div id="singleResult"></div>
+      <div id="singleResult" class="single-result"></div>
     </section>
 
     <!-- VIEW: DASHBOARD -->

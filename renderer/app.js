@@ -1,5 +1,4 @@
-//APP.JS
-/* ── Parser de envíos (idéntico al prototipo aprobado) ────── */
+/* ── Parsear números de envío ────── */
 function extraerEnvios(texto) {
   const resultados = [];
 
@@ -128,12 +127,6 @@ btnRun.addEventListener('click', async () => {
   btnRun.disabled = true;
   setStatus('running', 'Analizando…');
 
-  // Escuchar progreso en tiempo real
-  if (window.api) {
-    window.api.offProgress();
-    window.api.onProgress(line => agregarLog(line));
-  }
-
   try {
     let data;
 
@@ -148,7 +141,7 @@ btnRun.addEventListener('click', async () => {
     }
 
     resultados = data;
-    mostrarDashboard(res);
+    mostrarDashboard(data);
     setStatus('done', 'Listo');
     agregarLog('✓ Análisis completado', 'ok');
 
@@ -332,7 +325,94 @@ document.getElementById('btnBuscar')?.addEventListener('click', async () => {
   });
   const r = res[0];
 
-  document.getElementById('singleResult').innerHTML = `
-    <pre>${JSON.stringify(r, null, 2)}</pre>
-  `;
+  const ambientes = r.ambientes || [];
+
+  const timeline = ambientes.map((amb, idx) => `
+    <div class="timeline-step">
+        <div class="timeline-circle">
+            ${amb}
+        </div>
+
+        <div class="timeline-label">
+            ${amb}
+        </div>
+    </div>
+
+    ${idx < ambientes.length - 1
+      ? '<div class="timeline-connector"></div>'
+      : ''
+    }
+`).join('');
+
+  document.getElementById("singleResult").innerHTML = `
+<div class="envio-card">
+
+    <div class="envio-summary">
+
+        <div class="envio-number">
+            <div class="envio-icon">📦</div>
+
+            <div>
+                <div class="envio-title">
+                    Envío ${r.envio}
+                </div>
+
+                <div class="envio-sub">
+                    Ticket: ${r.ticket || "-"}
+                </div>
+            </div>
+        </div>
+
+        <div class="envio-metrics">
+
+            <div>
+                <span>Progreso</span>
+                <strong>${r.progreso}%</strong>
+            </div>
+
+            <div>
+                <span>SQLs</span>
+                <strong>${r.sqls.length}</strong>
+            </div>
+
+            <div>
+                <span>DROP</span>
+                <strong>${r.hasDrop ? "✔" : "✖"}</strong>
+            </div>
+
+            <div>
+                <span>CREATE</span>
+                <strong>${r.hasCreate ? "✔" : "✖"}</strong>
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="timeline-wrapper">
+        ${timeline}
+    </div>
+    <div class="sql-detail">
+
+    <h4>DROP TABLE</h4>
+
+    ${r.drops?.length
+      ? r.drops.map(x =>
+        `<span class="tag tag-danger">${x}</span>`
+      ).join("")
+      : "<span>Ninguno</span>"
+    }
+
+    <h4>CREATE TABLE</h4>
+
+    ${r.creates?.length
+      ? r.creates.map(x =>
+        `<span class="tag tag-ok">${x}</span>`
+      ).join("")
+      : "<span>Ninguno</span>"
+    }
+
+    </div>
+</div>
+`;
 });

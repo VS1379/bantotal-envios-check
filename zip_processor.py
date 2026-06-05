@@ -1,58 +1,114 @@
 import os
-import zipfile
 import tempfile
+import zipfile
+
 from sql_checker import analizar_sql
 
 RAR_PASSWORD = os.getenv("RAR_PASSWORD")
 
 
 def procesar_zip(zip_bytes, envio_nro):
-    sqls = []
-    hasDrop = False
-    hasCreate = False
+    print(f"[ZIP] Analizando envio {envio_nro}", flush=True)
+    tmp_zip = os.path.join(tempfile.gettempdir(), f"{envio_nro}.zip")
 
-    tmp = os.path.join(tempfile.gettempdir(), f"{envio_nro}.zip")
+    sqls = []
+    has_drop = False
+    has_create = False
+
+    drops_encontrados = set()
+    creates_encontrados = set()
 
     try:
-        # escribir zip
-        with open(tmp, "wb") as f:
+        # =========================
+        # GUARDAR ZIP TEMPORAL
+        # =========================
+        with open(tmp_zip, "wb") as f:
             f.write(zip_bytes)
+        # =========================
+        # ABRIR ZIP
+        # =========================
+        with zipfile.ZipFile(tmp_zip) as z:
 
-        # leer zip
-        with zipfile.ZipFile(tmp) as z:
-            for name in z.namelist():
+            archivos = z.namelist()
+
+            print(f"[ZIP] {envio_nro} contiene {len(archivos)} archivos", flush=True)
+
+            for name in archivos:
+
+                print(f"[ZIP] Analizando {name}", flush=True)
 
                 if not name.lower().endswith(".sql"):
                     continue
 
+                ...
+
+                print(f"[INFO] Analizando SQL: {name}", flush=True)
+
                 try:
-                    if RAR_PASSWORD:
-                        raw = z.read(name, pwd=RAR_PASSWORD.encode())
-                    else:
+
+                    # -------------------------
+                    # Intento SIN password
+                    # -------------------------
+
+                    try:
                         raw = z.read(name)
+
+                    except RuntimeError:
+
+                        # -------------------------
+                        # Intento CON password
+                        # -------------------------
+
+                        if not RAR_PASSWORD:
+                            raise Exception(
+                                f"ZIP protegido y no existe RAR_PASSWORD para {name}"
+                            )
+
+                        raw = z.read(name, pwd=RAR_PASSWORD.encode("utf-8"))
 
                     contenido = raw.decode("utf-8", errors="replace")
 
-                    drop, create = analizar_sql(contenido)
+                    print(f"[INFO] Primeros 300 chars de {name}:", flush=True)
+                    print(contenido[:300], flush=True)
+
+                    resultado = analizar_sql(contenido)
+                    print(
+                        f"[SQL] drops={resultado['drops']} creates={resultado['creates']}",
+                        flush=True,
+                    )
+
+                    print(f"[INFO] Resultado SQL: {resultado}", flush=True)
 
                     sqls.append(os.path.basename(name))
 
-                    if drop:
-                        hasDrop = True
-                    if create:
-                        hasCreate = True
+                    drops_encontrados.update(resultado.get("drops", []))
+
+                    creates_encontrados.update(resultado.get("creates", []))
+
+                    if resultado.get("hasDrop"):
+                        has_drop = True
+
+                    if resultado.get("hasCreate"):
+                        has_create = True
 
                 except Exception as e:
-                    # no cortar todo → seguir
-                    print(f"[WARN] {envio_nro} -> error en {name}: {e}")
+
+                    print(f"[WARN] {envio_nro} -> error en {name}: {e}", flush=True)
+
                     continue
 
         return {
             "sqls": sqls,
-            "hasDrop": hasDrop,
-            "hasCreate": hasCreate,
+            "hasDrop": has_drop,
+            "hasCreate": has_create,
+            "drops": sorted(list(drops_encontrados)),
+            "creates": sorted(list(creates_encontrados)),
         }
 
     finally:
-        if os.path.exists(tmp):
-            os.remove(tmp)
+
+        if os.path.exists(tmp_zip):
+            try:
+                os.remove(tmp_zip)
+            except Exception:
+                pass

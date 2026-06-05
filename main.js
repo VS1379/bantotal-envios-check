@@ -6,6 +6,11 @@ const { spawn } = require('child_process');
 
 let mainWindow;
 
+console.log('********************************************************');
+console.log('App iniciada. Cargando configuracion...');
+console.log('main.js');
+console.log('********************************************************');
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1200,
@@ -30,39 +35,81 @@ app.on('window-all-closed', () => {
 /* =========================
 IPC: RUN ANALYSIS (PYTHON)
 ========================= */
-ipcMain.handle('run-analysis', async (_, payload) => {
+ipcMain.handle("run-analysis", async (_, payload) => {
+
+  console.log("PAYLOAD RECIBIDO");
+  console.log(payload);
+
   return new Promise((resolve, reject) => {
-    const py = spawn('python', ['main.py', JSON.stringify(payload)]);
 
-    let output = '';
-    let errorOutput = '';
+    const py = spawn(
+      "python",
+      ["main.py", JSON.stringify(payload)],
+      {
+        env: {
+          ...process.env,
+          PYTHONIOENCODING: "utf-8"
+        }
+      }
+    );
 
-    py.stdout.on('data', (data) => {
+    let output = "";
+    let errorOutput = "";
+
+    py.stdout.on("data", (data) => {
+
       const txt = data.toString();
+
+      console.log("PYTHON:", txt);
+
       output += txt;
 
-      // 👇 importante: puede venir en chunks
-      if (output.includes('RESULT:')) {
+      if (output.includes("RESULT:")) {
+
         try {
-          const jsonStr = output.split('RESULT:')[1].trim();
+
+          const jsonStr = output.split("RESULT:")[1].trim();
+
           const parsed = JSON.parse(jsonStr);
+
           resolve(parsed);
+
         } catch (err) {
-          reject('Error parseando JSON de Python: ' + err.message);
+
+          reject(
+            "Error parseando JSON de Python: " +
+            err.message
+          );
         }
       }
     });
 
-    py.stderr.on('data', (data) => {
-      errorOutput += data.toString();
+    py.stderr.on("data", (data) => {
+
+      const txt = data.toString();
+
+      console.error("PYTHON ERROR:", txt);
+
+      errorOutput += txt;
     });
 
-    py.on('close', (code) => {
-      if (!output.includes('RESULT:')) {
-        reject(errorOutput || `Python terminó sin RESULT (code ${code})`);
+    py.on("close", (code) => {
+
+      console.log(
+        `Python finalizó. Code=${code}`
+      );
+
+      if (!output.includes("RESULT:")) {
+
+        reject(
+          errorOutput ||
+          `Python terminó sin RESULT (code ${code})`
+        );
       }
     });
+
   });
+
 });
 
 /* =========================

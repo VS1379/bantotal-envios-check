@@ -1,51 +1,30 @@
 import os
-import base64
-import pyodbc
 import sys
 import json
+import base64
+import traceback
+
+from repository import obtener_envio
 from zip_processor import procesar_zip
 
-# =========================
-# DB CONFIG
-# =========================
-conn_str = (
-    "DRIVER={ODBC Driver 18 for SQL Server};"
-    f"SERVER={os.environ.get('DB_HOST')},{os.environ.get('DB_PORT', '1433')};"
-    f"DATABASE={os.environ.get('DB_NAME')};"
-    f"UID={os.environ.get('DB_USER')};"
-    f"PWD={os.environ.get('DB_PASS')};"
-    "TrustServerCertificate=yes;"
-)
+sys.stdout.reconfigure(encoding="utf-8")
+
+print("MAIN.PY INICIADO", flush=True)
 
 
-def get_connection():
-    return pyodbc.connect(conn_str)
+def decode_base64(data):
+    data = data.strip()
+
+    missing = len(data) % 4
+
+    if missing:
+        data += "=" * (4 - missing)
+
+    return base64.b64decode(data)
 
 
-# =========================
-# ANALIZAR 1 ENVIO
-# =========================
 def analizar_envio(envio_nro):
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    cursor.execute(
-        """
-        SELECT EnvNro, Zip
-        FROM Land.dbo.Envios
-        WHERE EnvNro = ?
-        """,
-        envio_nro,
-    )
-
-    row = cursor.fetchone()
-    conn.close()
-
-    if not row:
-        return {"envio": envio_nro, "error": "No encontrado"}
-
-    zip_base64 = row.Zip
-
+    print(f"ANALIZANDO ENVIO {envio_nro}", flush=True)
     base = {
         "envio": envio_nro,
         "ticket": None,
@@ -54,50 +33,46 @@ def analizar_envio(envio_nro):
         "sqls": [],
         "hasDrop": False,
         "hasCreate": False,
+        "drops": [],
+        "creates": [],
     }
 
-    if not zip_base64:
+    data = obtener_envio(envio_nro)
+
+    if not data:
+        return {**base, "error": "No encontrado"}
+
+    if not data["zip"]:
         return {**base, "skipped": True}
 
     try:
-        # FIX base64 padding
-        def decode_base64(data):
-            data = data.strip()
-            missing = len(data) % 4
-            if missing:
-                data += "=" * (4 - missing)
-            return base64.b64decode(data)
 
-        zip_bytes = decode_base64(zip_base64)
+        zip_bytes = decode_base64(data["zip"])
 
-        # 🔥 TODA la lógica va acá
+        print(f"[DEBUG] Analizando envío {envio_nro}", flush=True)
+        print("LLAMANDO A PROCESAR ZIP", flush=True)
         res = procesar_zip(zip_bytes, envio_nro)
 
-        return {**base, "progreso": 100, **res}
+        return {
+            **base,
+            **res,
+            "progreso": 100,
+            "ambientes": data["ambientes"],
+        }
+    except Exception:
+        return {**base, "error": traceback.format_exc()}
 
-    except Exception as e:
-        return {**base, "error": f"ZIP error: {repr(e)}"}
 
-
-# =========================
-# MULTIPLE
-# =========================
 def analizar_envios(lista):
     return [analizar_envio(n) for n in lista]
 
 
-# =========================
-# ENTRYPOINT
-# =========================
 if __name__ == "__main__":
-    import json
-    import sys
 
     payload = json.loads(sys.argv[1])
+
     envios = payload.get("envios", [])
 
     result = analizar_envios(envios)
 
-sys.stdout.reconfigure(encoding="utf-8")
-
-print("RESULT:" + json.dumps(result, ensure_ascii=False))
+    print("RESULT:" + json.dumps(result, ensure_ascii=False))
