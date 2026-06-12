@@ -4,7 +4,7 @@ import json
 import base64
 import traceback
 
-from repository import obtener_envio
+from repository import obtener_envio, obtener_total_ambientes
 from zip_processor import procesar_zip
 
 sys.stdout.reconfigure(encoding="utf-8")
@@ -23,8 +23,13 @@ def decode_base64(data):
     return base64.b64decode(data)
 
 
+total_ambientes = obtener_total_ambientes()
+
+
 def analizar_envio(envio_nro):
+
     print(f"ANALIZANDO ENVIO {envio_nro}", flush=True)
+
     base = {
         "envio": envio_nro,
         "ticket": None,
@@ -45,20 +50,30 @@ def analizar_envio(envio_nro):
     if not data["zip"]:
         return {**base, "skipped": True}
 
+    # 🔥 calcular progreso acá
+    ambientes_instalados = len(data["ambientes"])
+
+    progreso = (
+        round((ambientes_instalados / total_ambientes) * 100) if total_ambientes else 0
+    )
+
     try:
 
         zip_bytes = decode_base64(data["zip"])
 
-        print(f"[DEBUG] Analizando envío {envio_nro}", flush=True)
-        print("LLAMANDO A PROCESAR ZIP", flush=True)
+        print(f"[DEBUG] Analizando envio {envio_nro}", flush=True)
+
         res = procesar_zip(zip_bytes, envio_nro)
 
         return {
             **base,
             **res,
-            "progreso": 100,
+            "envio": data["envio"],
+            "envioAlternativo": data["envioAlternativo"],
+            "progreso": progreso,
             "ambientes": data["ambientes"],
         }
+
     except Exception:
         return {**base, "error": traceback.format_exc()}
 

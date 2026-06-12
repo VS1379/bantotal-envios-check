@@ -15,45 +15,85 @@ def get_connection():
     return pyodbc.connect(conn_str)
 
 
-def obtener_envio(envio_nro):
+def obtener_total_ambientes():
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute(
-        """
-        SELECT
-            e.EnvNro,
-            e.Zip,
-            ea.AmbId,
-            a.AmbDsc
-        FROM Envios e
-        LEFT JOIN EnvAplicado ea
-            ON ea.EnvNro = e.EnvNro
-        LEFT JOIN Ambientes a
-            ON a.AmbId = ea.AmbId
-        WHERE e.EnvNro = ?
-    """,
-        envio_nro,
-    )
+    cursor.execute("""
+        SELECT COUNT(*)
+        FROM Ambientes
+        WHERE AmbBaja = 'N'
+        AND TipEnvId = 1
+    """)
 
-    rows = cursor.fetchall()
+    total = cursor.fetchone()[0]
 
     conn.close()
 
-    if not rows:
+    return total
+
+
+def obtener_envio(numero):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    numero = str(numero)
+
+    if numero.startswith("413"):
+
+        cursor.execute(
+            """
+            SELECT
+                E.EnvNro,
+                E.EnvIdAlternativo,
+                E.Zip
+            FROM Envios E
+            WHERE E.EnvIdAlternativo = ?
+            """,
+            int(numero),
+        )
+
+    else:
+
+        cursor.execute(
+            """
+            SELECT
+                E.EnvNro,
+                E.EnvIdAlternativo,
+                E.Zip
+            FROM Envios E
+            WHERE E.EnvNro = ?
+            """,
+            int(numero),
+        )
+
+    row = cursor.fetchone()
+
+    if not row:
+        conn.close()
         return None
 
-    ambientes = []
+    env_nro = row.EnvNro
 
-    for r in rows:
+    cursor.execute(
+        """
+        SELECT A.AmbDsc
+        FROM EnvAplicado EA
+        INNER JOIN Ambientes A
+            ON A.AmbId = EA.AmbId
+        WHERE EA.EnvNro = ?
+        ORDER BY A.AmbSeq
+        """,
+        env_nro,
+    )
 
-        if r.AmbDsc and r.AmbDsc not in ambientes:
-            ambientes.append(r.AmbDsc)
+    ambientes = [r.AmbDsc for r in cursor.fetchall()]
 
-    first = rows[0]
+    conn.close()
 
     return {
-        "envio": first.EnvNro,
-        "zip": first.Zip,
+        "envio": env_nro,  # número real
+        "envioAlternativo": row.EnvIdAlternativo,
+        "zip": row.Zip,
         "ambientes": ambientes,
     }

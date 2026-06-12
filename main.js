@@ -1,10 +1,11 @@
 require('dotenv').config();
 
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
 
 let mainWindow;
+
 
 console.log('********************************************************');
 console.log('App iniciada. Cargando configuracion...');
@@ -13,7 +14,7 @@ console.log('********************************************************');
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1200,
+    width: 1270,
     height: 800,
     backgroundColor: '#0b0f14',
     webPreferences: {
@@ -23,7 +24,19 @@ function createWindow() {
     },
   });
 
-  mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
+  mainWindow.loadFile(
+    path.join(__dirname, 'renderer', 'index.html')
+  );
+
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    shell.openExternal(url);
+    return { action: 'deny' };
+  });
+
+  mainWindow.webContents.on('will-navigate', (event, url) => {
+    event.preventDefault();
+    shell.openExternal(url);
+  });
 }
 
 app.whenReady().then(createWindow);
@@ -112,9 +125,14 @@ ipcMain.handle("run-analysis", async (_, payload) => {
 
 });
 
+ipcMain.handle('open-external', async (_, url) => {
+  await shell.openExternal(url);
+});
+
 /* =========================
 IPC: CONFIG (.env)
 ========================= */
+
 ipcMain.handle('get-config', async () => {
   return {
     user: process.env.BANTOTAL_USER || '',

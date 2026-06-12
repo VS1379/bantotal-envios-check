@@ -104,21 +104,17 @@ function actualizarPreview() {
   btnRun.disabled = false;
 }
 
-/* ── Cargar variables ────────────────────────────────────────── */
-window.addEventListener('DOMContentLoaded', async () => {
-  if (window.api) {
-    const cfg = await window.api.getConfig();
-
-    document.getElementById('cfgUrl').textContent = cfg.url || '-';
-    document.getElementById('cfgRar').textContent = cfg.rarPassword || '-';
-    document.getElementById('inputUser').value = cfg.user || '';
-    document.getElementById('inputPass').value = cfg.pass || '';
-  }
-});
-
 /* ── Correr análisis ────────────────────────────────────────── */
 btnRun.addEventListener('click', async () => {
   if (!todosNumeros.length) return;
+
+  const ticketMap = {};
+
+  for (const item of parsedData) {
+    for (const envio of item.nums) {
+      ticketMap[envio] = item.ticket;
+    }
+  }
 
   // Reset UI
   logBody.innerHTML = '';
@@ -140,8 +136,15 @@ btnRun.addEventListener('click', async () => {
       data = simularResultado(todosNumeros, parsedData);
     }
 
-    resultados = data;
-    mostrarDashboard(data);
+    resultados = data.map(r => ({
+      ...r,
+      ticket: ticketMap[r.envio] || null,
+      jiraUrl: ticketMap[r.envio]
+        ? `https://apvf2021.atlassian.net/browse/${ticketMap[r.envio]}`
+        : null
+    }));
+
+    mostrarDashboard(resultados);
     setStatus('done', 'Listo');
     agregarLog('✓ Análisis completado', 'ok');
 
@@ -234,12 +237,14 @@ function filtrarTabla() {
   tbody.innerHTML = '';
 
   if (!filas.length) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:2rem;font-size:13px;">Sin resultados para este filtro.</td></tr>';
+    tbody.innerHTML =
+      '<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:2rem;font-size:13px;">Sin resultados para este filtro.</td></tr>';
     return;
   }
 
   for (const r of filas) {
     const tr = document.createElement('tr');
+    console.log(r);
 
     const pct = r.progreso ?? 0;
     const progressHtml = r.skipped
@@ -253,14 +258,18 @@ function filtrarTabla() {
       ? '<span style="color:var(--text3);font-size:12px">—</span>'
       : (r.sqls && r.sqls.length
         ? r.sqls.map(s => `<span class="tag tag-ok">${s}</span>`).join(' ')
-        : '<span style="color:var(--text3);font-size:12px">ninguno</span>');
+        : '<span style="color:var(--text3);font-size:12px">Clases</span>');
 
     const dropHtml = r.skipped ? '—' : (r.hasDrop ? '<span class="tag tag-yes">SÍ</span>' : '<span class="tag tag-no">NO</span>');
     const createHtml = r.skipped ? '—' : (r.hasCreate ? '<span class="tag tag-yes">SÍ</span>' : '<span class="tag tag-no">NO</span>');
-
     tr.innerHTML = `
-      <td><span class="envio-num">#${r.envio}</span></td>
-      <td>${r.ticket ? `<span class="ticket-chip">${r.ticket}</span>` : '<span style="color:var(--text3)">—</span>'}</td>
+      <td>
+        ${r.ticket
+        ? `<a href="${r.jiraUrl}" target="_blank" class="ticket-chip">${r.ticket}</a>`
+        : '<span style="color:var(--text3)">—</span>'
+      }
+      </td>
+      <td><a href="http://cpapibttv01:8080/SGREnvios/#/index/aplicar?Id=${r.envio}" target="_blank"><span class="envio-num">${r.envio}</span></a></td>
       <td>${progressHtml}</td>
       <td>${sqlsHtml}</td>
       <td>${dropHtml}</td>
@@ -296,7 +305,7 @@ function simularResultado(numeros, parsed) {
       ticket: ticketMap[n] || null,
       progreso: skipped ? 100 : Math.floor(Math.random() * 90) + 5,
       skipped,
-      sqls: hasSql ? [`${n}_Script_1.sql`] : [],
+      sqls: hasSql ? [`${n} _Script_1.sql`] : [],
       hasDrop,
       hasCreate: hasCr,
     };
@@ -328,7 +337,7 @@ document.getElementById('btnBuscar')?.addEventListener('click', async () => {
   const ambientes = r.ambientes || [];
 
   const timeline = ambientes.map((amb, idx) => `
-    <div class="timeline-step">
+      <div div class="timeline-step" >
         <div class="timeline-circle">
             ${amb}
         </div>
@@ -336,16 +345,16 @@ document.getElementById('btnBuscar')?.addEventListener('click', async () => {
         <div class="timeline-label">
             ${amb}
         </div>
-    </div>
+    </div >
 
-    ${idx < ambientes.length - 1
+      ${idx < ambientes.length - 1
       ? '<div class="timeline-connector"></div>'
       : ''
     }
-`).join('');
+    `).join('');
 
   document.getElementById("singleResult").innerHTML = `
-<div class="envio-card">
+      < div class="envio-card" >
 
     <div class="envio-summary">
 
@@ -413,6 +422,6 @@ document.getElementById('btnBuscar')?.addEventListener('click', async () => {
     }
 
     </div>
-</div>
-`;
+</div >
+      `;
 });
