@@ -3,6 +3,10 @@ require('dotenv').config();
 const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
+const isPackaged = app.isPackaged;
+const exePath = isPackaged
+  ? path.join(process.resourcesPath, "backend", "main.exe")
+  : path.join(__dirname, "backend", "main.exe");
 
 let mainWindow;
 
@@ -55,15 +59,11 @@ ipcMain.handle("run-analysis", async (_, payload) => {
 
   return new Promise((resolve, reject) => {
 
+    console.log("Backend:", exePath);
+
     const py = spawn(
-      "python",
-      ["main.py", JSON.stringify(payload)],
-      {
-        env: {
-          ...process.env,
-          PYTHONIOENCODING: "utf-8"
-        }
-      }
+      exePath,
+      [JSON.stringify(payload)]
     );
 
     let output = "";

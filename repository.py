@@ -1,5 +1,17 @@
+from dotenv import load_dotenv
+from pathlib import Path
 import os
 import pyodbc
+import sys
+
+if getattr(sys, "frozen", False):
+    BASE_DIR = Path(sys.executable).parent
+else:
+    BASE_DIR = Path(__file__).resolve().parent
+
+env_file = BASE_DIR / "config.env"
+
+load_dotenv(env_file)
 
 conn_str = (
     "DRIVER={ODBC Driver 18 for SQL Server};"

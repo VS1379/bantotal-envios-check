@@ -353,75 +353,72 @@ document.getElementById('btnBuscar')?.addEventListener('click', async () => {
     }
     `).join('');
 
-  document.getElementById("singleResult").innerHTML = `
-      < div class="envio-card" >
+  document.getElementById("singleResult").innerHTML =
+    `<div class="envio-card" >
+      <div class="envio-summary">
+          <div class="envio-number">
+              <div class="envio-icon">📦</div>
+                <div>
+                      <div class="envio-title">
+                          Envío ${r.envio}
+                      </div>
 
-    <div class="envio-summary">
-
-        <div class="envio-number">
-            <div class="envio-icon">📦</div>
-
-            <div>
-                <div class="envio-title">
-                    Envío ${r.envio}
+                      <div class="envio-sub">
+                          Ticket: ${r.ticket || "-"}
+                      </div>
                 </div>
+          </div>
 
-                <div class="envio-sub">
-                    Ticket: ${r.ticket || "-"}
-                </div>
-            </div>
-        </div>
+          <div class="envio-metrics">
 
-        <div class="envio-metrics">
+              <div>
+                  <span>Progreso</span>
+                  <strong>${r.progreso}%</strong>
+              </div>
 
-            <div>
-                <span>Progreso</span>
-                <strong>${r.progreso}%</strong>
-            </div>
+              <div>
+                  <span>SQLs</span>
+                  <strong>${r.sqls.length}</strong>
+              </div>
 
-            <div>
-                <span>SQLs</span>
-                <strong>${r.sqls.length}</strong>
-            </div>
+              <div>
+                  <span>DROP</span>
+                  <strong>${r.hasDrop ? "✔" : "✖"}</strong>
+              </div>
 
-            <div>
-                <span>DROP</span>
-                <strong>${r.hasDrop ? "✔" : "✖"}</strong>
-            </div>
+              <div>
+                  <span>CREATE</span>
+                  <strong>${r.hasCreate ? "✔" : "✖"}</strong>
+              </div>
 
-            <div>
-                <span>CREATE</span>
-                <strong>${r.hasCreate ? "✔" : "✖"}</strong>
-            </div>
+          </div>
 
-        </div>
+      </div>
 
-    </div>
+      <div class="timeline-wrapper">
+          ${timeline}
+      </div>
+      <div class="sql-detail">
 
-    <div class="timeline-wrapper">
-        ${timeline}
-    </div>
-    <div class="sql-detail">
+      <h4>DROP TABLE</h4>
 
-    <h4>DROP TABLE</h4>
+      ${r.drops?.length
+        ? r.drops.map(x =>
+          `<span class="tag tag-danger">${x}</span>`
+        ).join("")
+        : "<span>Ninguno</span>"
+      }
 
-    ${r.drops?.length
-      ? r.drops.map(x =>
-        `<span class="tag tag-danger">${x}</span>`
-      ).join("")
-      : "<span>Ninguno</span>"
-    }
+      <h4>CREATE TABLE</h4>
 
-    <h4>CREATE TABLE</h4>
+      ${r.creates?.length
+        ? r.creates.map(x =>
+          `<span class="tag tag-ok">${x}</span>`
+        ).join("")
+        : "<span>Ninguno</span>"
+      }
 
-    ${r.creates?.length
-      ? r.creates.map(x =>
-        `<span class="tag tag-ok">${x}</span>`
-      ).join("")
-      : "<span>Ninguno</span>"
-    }
-
-    </div>
+      </div>
 </div >
-      `;
+  `;
 });
