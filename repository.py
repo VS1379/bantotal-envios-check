@@ -30,18 +30,42 @@ def get_connection():
 def obtener_total_ambientes():
     conn = get_connection()
     cursor = conn.cursor()
-
     cursor.execute("""
         SELECT COUNT(*)
         FROM Ambientes
         WHERE AmbBaja = 'N'
         AND TipEnvId = 1
     """)
-
-    total = cursor.fetchone()[0]
-
+    total = {"Bantotal": cursor.fetchone()[0]}
+    cursor.execute("""
+        SELECT COUNT(*)
+        FROM Ambientes
+        WHERE AmbBaja = 'N'
+        AND TipEnvId = 3
+    """)
+    total["BSM"] = cursor.fetchone()[0]
+    cursor.execute("""
+        SELECT COUNT(*)
+        FROM Ambientes
+        WHERE AmbBaja = 'N'
+        AND TipEnvId = 4
+    """)
+    total["Canales/Bpeople"] = cursor.fetchone()[0]
+    cursor.execute("""
+        SELECT COUNT(*)
+        FROM Ambientes
+        WHERE AmbBaja = 'N'
+        AND TipEnvId = 5
+    """)
+    total["IBNode"] = cursor.fetchone()[0]
+    cursor.execute("""
+        SELECT COUNT(*)
+        FROM Ambientes
+        WHERE AmbBaja = 'N'
+        AND TipEnvId = 7
+    """)
+    total["IBNodeAdmin"] = cursor.fetchone()[0]
     conn.close()
-
     return total
 
 
@@ -51,7 +75,13 @@ def obtener_envio(numero):
 
     numero = str(numero)
 
-    if numero.startswith("413"):
+    if (
+        numero.startswith("413")
+        or numero.startswith("533")
+        or numero.startswith("534")
+        or numero.startswith("535")
+        or numero.startswith("536")
+    ):
 
         cursor.execute(
             """

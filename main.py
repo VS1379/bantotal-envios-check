@@ -23,6 +23,25 @@ def decode_base64(data):
     return base64.b64decode(data)
 
 
+def porcentaje_envios_instalados(ambientes_instalados, total_ambientes, data):
+    nroEnvio = str(data["envioAlternativo"])[:3]
+    total = ""
+    match nroEnvio:
+        case "533":
+            total = total_ambientes.get("BSM")
+        case "534":
+            total = total_ambientes.get("Canales/Bpeople")
+        case "535":
+            total = total_ambientes.get("IBNode")
+        case "536":
+            total = total_ambientes.get("IBNodeAdm")
+        case _:
+            total = total_ambientes.get("Bantotal")
+    return (
+        round((ambientes_instalados / total) * 100) if total else 0
+    )
+
+
 total_ambientes = obtener_total_ambientes()
 
 
@@ -50,12 +69,9 @@ def analizar_envio(envio_nro):
     if not data["zip"]:
         return {**base, "skipped": True}
 
-    # 🔥 calcular progreso acá
     ambientes_instalados = len(data["ambientes"])
 
-    progreso = (
-        round((ambientes_instalados / total_ambientes) * 100) if total_ambientes else 0
-    )
+    progreso = porcentaje_envios_instalados(ambientes_instalados, total_ambientes, data)
 
     try:
 

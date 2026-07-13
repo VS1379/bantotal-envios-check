@@ -5,6 +5,7 @@ import zipfile
 from sql_checker import analizar_sql
 
 RAR_PASSWORD = os.getenv("RAR_PASSWORD")
+RAR_PASSWORD_BPEOPLE = os.getenv("RAR_PASSWORD_BPEOPLE")
 
 
 def procesar_zip(zip_bytes, envio_nro):
@@ -55,19 +56,33 @@ def procesar_zip(zip_bytes, envio_nro):
 
                     except RuntimeError:
 
-                        # -------------------------
-                        # Intento CON password
-                        # -------------------------
+                        passwords = []
 
-                        if not RAR_PASSWORD:
+                        if RAR_PASSWORD:
+                            passwords.append(RAR_PASSWORD)
+
+                        if RAR_PASSWORD_BPEOPLE:
+                            passwords.append(RAR_PASSWORD_BPEOPLE)
+
+                        if not passwords:
                             raise Exception(
-                                f"ZIP protegido y no existe RAR_PASSWORD para {name}"
+                                f"No hay contraseña configurada para {name}"
                             )
 
-                        raw = z.read(name, pwd=RAR_PASSWORD.encode("utf-8"))
+                        raw = None
+
+                        for pwd in passwords:
+                            try:
+                                raw = z.read(name, pwd=pwd.encode("utf-8"))
+                                print(f"[ZIP] Password correcta: {pwd}", flush=True)
+                                break
+                            except RuntimeError:
+                                pass
+
+                        if raw is None:
+                            raise Exception(f"Ninguna contraseña funcionó para {name}")
 
                     contenido = raw.decode("utf-8", errors="replace")
-
                     print(f"[INFO] Primeros 300 chars de {name}:", flush=True)
                     print(contenido[:300], flush=True)
 

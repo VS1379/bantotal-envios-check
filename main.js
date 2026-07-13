@@ -13,7 +13,6 @@ let mainWindow;
 
 console.log('********************************************************');
 console.log('App iniciada. Cargando configuracion...');
-console.log('main.js');
 console.log('********************************************************');
 
 function createWindow() {

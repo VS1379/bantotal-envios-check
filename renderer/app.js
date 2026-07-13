@@ -360,9 +360,8 @@ document.getElementById('btnBuscar')?.addEventListener('click', async () => {
               <div class="envio-icon">📦</div>
                 <div>
                       <div class="envio-title">
-                          Envío ${r.envio}
+                          Envío <a href="http://cpapibttv01:8080/SGREnvios/#/index/aplicar?Id=${r.envio}" target="_blank" style="text-decoration: underline; color: white;">${r.envio}</a>
                       </div>
-
                       <div class="envio-sub">
                           Ticket: ${r.ticket || "-"}
                       </div>
@@ -403,20 +402,20 @@ document.getElementById('btnBuscar')?.addEventListener('click', async () => {
       <h4>DROP TABLE</h4>
 
       ${r.drops?.length
-        ? r.drops.map(x =>
-          `<span class="tag tag-danger">${x}</span>`
-        ).join("")
-        : "<span>Ninguno</span>"
-      }
+      ? r.drops.map(x =>
+        `<span class="tag tag-danger">${x}</span>`
+      ).join("")
+      : "<span>Ninguno</span>"
+    }
 
       <h4>CREATE TABLE</h4>
 
       ${r.creates?.length
-        ? r.creates.map(x =>
-          `<span class="tag tag-ok">${x}</span>`
-        ).join("")
-        : "<span>Ninguno</span>"
-      }
+      ? r.creates.map(x =>
+        `<span class="tag tag-ok">${x}</span>`
+      ).join("")
+      : "<span>Ninguno</span>"
+    }
 
       </div>
 </div >
