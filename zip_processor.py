@@ -32,19 +32,11 @@ def procesar_zip(zip_bytes, envio_nro):
 
             archivos = z.namelist()
 
-            print(f"[ZIP] {envio_nro} contiene {len(archivos)} archivos", flush=True)
-
             for name in archivos:
-
-                print(f"[ZIP] Analizando {name}", flush=True)
 
                 if not name.lower().endswith(".sql"):
                     continue
-
                 ...
-
-                print(f"[INFO] Analizando SQL: {name}", flush=True)
-
                 try:
 
                     # -------------------------
@@ -74,7 +66,6 @@ def procesar_zip(zip_bytes, envio_nro):
                         for pwd in passwords:
                             try:
                                 raw = z.read(name, pwd=pwd.encode("utf-8"))
-                                print(f"[ZIP] Password correcta: {pwd}", flush=True)
                                 break
                             except RuntimeError:
                                 pass
@@ -83,16 +74,8 @@ def procesar_zip(zip_bytes, envio_nro):
                             raise Exception(f"Ninguna contraseña funcionó para {name}")
 
                     contenido = raw.decode("utf-8", errors="replace")
-                    print(f"[INFO] Primeros 300 chars de {name}:", flush=True)
-                    print(contenido[:300], flush=True)
 
                     resultado = analizar_sql(contenido)
-                    print(
-                        f"[SQL] drops={resultado['drops']} creates={resultado['creates']}",
-                        flush=True,
-                    )
-
-                    print(f"[INFO] Resultado SQL: {resultado}", flush=True)
 
                     sqls.append(os.path.basename(name))
 

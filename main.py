@@ -12,6 +12,16 @@ sys.stdout.reconfigure(encoding="utf-8")
 print("MAIN.PY INICIADO", flush=True)
 
 
+def descargar_envio(envio_nro):
+
+    data = obtener_envio(envio_nro)
+
+    if not data:
+        return {"ok": False, "error": "No encontrado"}
+
+    return {"ok": True, "envio": data["envio"], "zip": data["zip"]}
+
+
 def decode_base64(data):
     data = data.strip()
 
@@ -34,12 +44,10 @@ def porcentaje_envios_instalados(ambientes_instalados, total_ambientes, data):
         case "535":
             total = total_ambientes.get("IBNode")
         case "536":
-            total = total_ambientes.get("IBNodeAdm")
+            total = total_ambientes.get("IBNodeAdmin")
         case _:
             total = total_ambientes.get("Bantotal")
-    return (
-        round((ambientes_instalados / total) * 100) if total else 0
-    )
+    return round((ambientes_instalados / total) * 100) if total else 0
 
 
 total_ambientes = obtener_total_ambientes()
@@ -77,8 +85,6 @@ def analizar_envio(envio_nro):
 
         zip_bytes = decode_base64(data["zip"])
 
-        print(f"[DEBUG] Analizando envio {envio_nro}", flush=True)
-
         res = procesar_zip(zip_bytes, envio_nro)
 
         return {
@@ -102,8 +108,16 @@ if __name__ == "__main__":
 
     payload = json.loads(sys.argv[1])
 
-    envios = payload.get("envios", [])
+    accion = payload.get("accion", "analizar")
 
-    result = analizar_envios(envios)
+    if accion == "analizar":
+
+        envios = payload.get("envios", [])
+
+        result = analizar_envios(envios)
+
+    else:
+
+        result = descargar_envio(payload["envio"])
 
     print("RESULT:" + json.dumps(result, ensure_ascii=False))

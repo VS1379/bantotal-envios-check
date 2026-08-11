@@ -6,4 +6,5 @@ contextBridge.exposeInMainWorld("api", {
   openExternal: (url) => ipcRenderer.invoke('open-external', url),
   getConfig: () =>
     ipcRenderer.invoke("get-config"),
+  downloadEnvio: (envio) => ipcRenderer.invoke("download-envio", envio),
 });

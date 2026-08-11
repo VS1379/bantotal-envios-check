@@ -1,45 +1,73 @@
-/* ── Parsear números de envío ────── */
 function extraerEnvios(texto) {
+
   const resultados = [];
 
-  // Formato 1: bloques con "Envíos:"
-  const fmt1Blocks = texto.split(/(?=\[IBTBSE-)/);
-  for (const bloque of fmt1Blocks) {
-    const ticketMatch = bloque.match(/\[?(IBTBSE-\d+)\]?/);
-    if (!ticketMatch) continue;
-    const enviosMatch = bloque.match(/Env[ií]os?:\s*([\d\s\-]+)/i);
-    if (!enviosMatch) continue;
-    const nums = enviosMatch[1].match(/\d+/g)?.map(Number) || [];
-    if (!nums.length) continue;
-    const descMatch = bloque.match(/\]?\s*([^\n\[]+?)(?:\s*-\s*Jira)?[\n$]/);
-    const desc = descMatch ? descMatch[1].trim() : '';
-    resultados.push({ ticket: ticketMatch[1], formato: 1, desc, nums });
+  texto = texto.trim();
+
+  //==========================================
+  // FMT2
+  // Solo números
+  //==========================================
+
+  if (!texto.includes("IBTBSE-")) {
+
+    const nums = texto.match(/\d+/g)?.map(Number) || [];
+
+    if (nums.length) {
+      resultados.push({
+        ticket: null,
+        formato: 2,
+        desc: "",
+        nums
+      });
+    }
+
+    console.log(resultados)
+    return resultados;
   }
 
-  const ticketsFmt1 = new Set(resultados.map(r => r.ticket));
+  //==========================================
+  // FMT1
+  // Export Jira
+  //==========================================
 
-  // Formato 2: separado por __
-  const lineas = texto.split('\n');
+  const lineas = texto.split(/\r?\n/);
 
   for (const linea of lineas) {
+
     const l = linea.trim();
-    if (!l || l.startsWith('Clave')) continue;
 
-    const match = l.match(/(IBTBSE-\d+)\s+(.+?)\s+([\d\s\-]+)$/);
-    if (!match) continue;
+    if (!l)
+      continue;
 
-    const [, ticket, descRaw, enviosRaw] = match;
-    const nums = enviosRaw.match(/\d+/g)?.map(Number) || [];
+    if (l.startsWith("Tipo de Incidencia"))
+      continue;
+
+    const campos = l.split("\t");
+
+    if (campos.length < 4)
+      continue;
+
+    const [, ticket, resumen, envios] = campos;
+
+    if (!/^IBTBSE-\d+$/.test(ticket))
+      continue;
+
+    const nums = envios.match(/\d+/g)?.map(Number) || [];
 
     resultados.push({
       ticket,
-      formato: 3,
-      desc: descRaw.trim(),
+      formato: 1,
+      desc: resumen.trim(),
       nums
     });
   }
-
+  console.log(resultados)
   return resultados;
+}
+
+async function descargarEnvio(envio) {
+  await window.api.downloadEnvio(envio);
 }
 
 /* ── Estado global ──────────────────────────────────────────── */
@@ -138,7 +166,10 @@ btnRun.addEventListener('click', async () => {
 
     resultados = data.map(r => ({
       ...r,
-      ticket: ticketMap[r.envio] || null,
+      ticket:
+        ticketMap[r.envio] ||
+        ticketMap[r.envioAlternativo] ||
+        null,
       jiraUrl: ticketMap[r.envio]
         ? `https://apvf2021.atlassian.net/browse/${ticketMap[r.envio]}`
         : null
@@ -195,10 +226,7 @@ function mostrarDashboard(data) {
   document.getElementById('st-skip').textContent = skipped;
   document.getElementById('st-sql').textContent = conSql;
   document.getElementById('st-ddl').textContent = conDdl;
-
-  const subtitle = `${total} envíos · ${conDdl} con DROP/CREATE TABLE`;
-  document.getElementById('dashSubtitle').textContent = subtitle;
-
+  document.getElementById('dashSubtitle').textContent = "Envios analizados "
   document.getElementById('statsRow').style.display = '';
   document.getElementById('resultsWrap').style.display = '';
   document.getElementById('emptyState').style.display = 'none';
@@ -262,16 +290,20 @@ function filtrarTabla() {
 
     const dropHtml = r.skipped ? '—' : (r.hasDrop ? '<span class="tag tag-yes">SÍ</span>' : '<span class="tag tag-no">NO</span>');
     const createHtml = r.skipped ? '—' : (r.hasCreate ? '<span class="tag tag-yes">SÍ</span>' : '<span class="tag tag-no">NO</span>');
-    tr.innerHTML = `
+    console.log(r)
+    tr.innerHTML = `  
       <td>
         ${r.ticket
         ? `<a href="${r.jiraUrl}" target="_blank" class="ticket-chip">${r.ticket}</a>`
         : '<span style="color:var(--text3)">—</span>'
       }
       </td>
+      <td><span class="envio-num">${r.envioAlternativo || '—'}</span></td>
       <td><a href="http://cpapibttv01:8080/SGREnvios/#/index/aplicar?Id=${r.envio}" target="_blank"><span class="envio-num">${r.envio}</span></a></td>
-      <td>${progressHtml}</td>
-      <td>${sqlsHtml}</td>
+      <td>${progressHtml} <span style="color:green">${r.ambientes[r.ambientes.length - 1] || '—'}</span></td>
+      <td onclick="descargarEnvio(${r.envio})">
+      ${sqlsHtml}
+      </td>
       <td>${dropHtml}</td>
       <td>${createHtml}</td>
     `;
@@ -388,6 +420,13 @@ document.getElementById('btnBuscar')?.addEventListener('click', async () => {
               <div>
                   <span>CREATE</span>
                   <strong>${r.hasCreate ? "✔" : "✖"}</strong>
+              </div>
+              <div>
+                  <span>Contenido</span>
+                  <strong>${r.length ? r.sqls.map(x => `<span class="tag tag-ok">${x}</span>`).join(' ') : "Clases"}</strong>
+              ${console.log("Contenido:", r)}
+              ${console.log("Contenido:", r.sqls)}
+              ${console.log("Contenido:", r.sqlsHtml)}
               </div>
 
           </div>

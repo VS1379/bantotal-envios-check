@@ -1,5 +1,7 @@
 require('dotenv').config();
 
+const fs = require("fs");
+const { dialog } = require("electron");
 const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
@@ -126,6 +128,67 @@ ipcMain.handle("run-analysis", async (_, payload) => {
 
 ipcMain.handle('open-external', async (_, url) => {
   await shell.openExternal(url);
+});
+
+ipcMain.handle("download-envio", async (_, envio) => {
+
+  const { canceled, filePath } = await dialog.showSaveDialog(mainWindow, {
+    title: "Guardar envío",
+    defaultPath: `Envio_${envio}.zip`,
+    filters: [
+      { name: "ZIP", extensions: ["zip"] }
+    ]
+  });
+
+  if (canceled) return;
+
+  return new Promise((resolve, reject) => {
+
+    const py = spawn(exePath, [
+      JSON.stringify({
+        accion: "descargar",
+        envio: envio
+      })
+    ]);
+
+    let output = "";
+    let errorOutput = "";
+
+    py.stdout.on("data", data => {
+
+      output += data.toString();
+
+      if (output.includes("RESULT:")) {
+
+        const json = JSON.parse(
+          output.split("RESULT:")[1].trim()
+        );
+
+        if (!json.ok) {
+          reject(json.error);
+          return;
+        }
+
+        const buffer = Buffer.from(json.zip, "base64");
+
+        fs.writeFileSync(filePath, buffer);
+
+        resolve(true);
+      }
+    });
+
+    py.stderr.on("data", data => {
+      errorOutput += data.toString();
+    });
+
+    py.on("close", code => {
+      if (!output.includes("RESULT:")) {
+        reject(errorOutput);
+      }
+    });
+
+  });
+
 });
 
 /* =========================
