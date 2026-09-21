@@ -1,6 +1,6 @@
-# Analizador de Envíos — Bantotal
+# Analizador de Envíos — Bantotal SGR
 
-App desktop (Electron + Python + Playwright) para analizar envíos de Bantotal.
+App desktop (Electron + Python + Playwright) para analizar envíos del SGR Bantotal.
 
 ## Setup
 
@@ -25,7 +25,7 @@ playwright install chromium
 > - **Linux:** `sudo apt install unrar`
 > - **macOS:** `brew install rar`
 
-### 3. Credenciales (opcional)
+### 3. Credenciales
 
 Renombrá `.env.example` a `.env` y completá:
 
@@ -33,13 +33,13 @@ Renombrá `.env.example` a `.env` y completá:
 
 ```
 
-Si no, las podés ingresar directamente en la UI cada vez.
-
 ### 4. Correr la app
 
 ```bash
 npm start
 ```
+
+### 5. pyinstaller --onefile --hidden-import=dotenv main.py
 
 ---
 

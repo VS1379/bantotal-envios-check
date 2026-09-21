@@ -66,6 +66,47 @@ function extraerEnvios(texto) {
   return resultados;
 }
 
+/* ── Tema ─────────────────────────────────────────────────── */
+
+const themeToggle = document.getElementById("themeToggle");
+
+function aplicarTema() {
+
+  const tema = localStorage.getItem("tema") || "dark";
+
+  if (tema === "light") {
+    document.body.classList.add("light");
+
+    if (themeToggle) {
+      themeToggle.textContent = "☀️ Tema claro";
+    }
+
+  } else {
+
+    document.body.classList.remove("light");
+
+    if (themeToggle) {
+      themeToggle.textContent = "🌙 Tema oscuro";
+    }
+  }
+}
+
+themeToggle?.addEventListener("click", () => {
+
+  const esClaro = document.body.classList.toggle("light");
+
+  localStorage.setItem(
+    "tema",
+    esClaro ? "light" : "dark"
+  );
+
+  themeToggle.textContent = esClaro
+    ? "☀️ Tema claro"
+    : "🌙 Tema oscuro";
+});
+
+aplicarTema();
+
 async function descargarEnvio(envio) {
   await window.api.downloadEnvio(envio);
 }
@@ -273,15 +314,12 @@ function filtrarTabla() {
   for (const r of filas) {
     const tr = document.createElement('tr');
     console.log(r);
-
     const pct = r.progreso ?? 0;
     const progressHtml = r.skipped
       ? `<span class="tag tag-skip">100% — skip</span>`
       : `<div style="display:flex;align-items:center;gap:8px">
-           <div class="progress-bar"><div class="progress-fill${pct === 100 ? ' full' : ''}" style="width:${pct}%"></div></div>
-           <span style="font-family:var(--mono);font-size:11px;color:var(--text2)">${pct}%</span>
-         </div>`;
-
+          <div class="progress-bar"><div class="progress-fill${pct === 100 ? ' full' : ''}" style="width:${pct}%"></div></div>
+          <span style="font-family:var(--mono);font-size:11px;color:var(--text2)">${pct}%</span></div>`;
     const sqlsHtml = r.skipped
       ? '<span style="color:var(--text3);font-size:12px">—</span>'
       : (r.sqls && r.sqls.length
@@ -290,8 +328,24 @@ function filtrarTabla() {
 
     const dropHtml = r.skipped ? '—' : (r.hasDrop ? '<span class="tag tag-yes">SÍ</span>' : '<span class="tag tag-no">NO</span>');
     const createHtml = r.skipped ? '—' : (r.hasCreate ? '<span class="tag tag-yes">SÍ</span>' : '<span class="tag tag-no">NO</span>');
-    console.log(r)
-    tr.innerHTML = `  
+    switch (r.estado) {
+      case "A":
+        r.estado = "FINALIZADO✅"
+        break;
+      case "E":
+        r.estado = "ERROR EN ALGUN AMBIENTE🚨💥"
+        break;
+      case "F":
+        r.estado = "OMITIDO⏭️"
+        break;
+      case "S":
+        r.estado = "EN CURSO🚧"
+        break;
+      default:
+        r.estado = "—";
+        break;
+    }
+    tr.innerHTML = `
       <td>
         ${r.ticket
         ? `<a href="${r.jiraUrl}" target="_blank" class="ticket-chip">${r.ticket}</a>`
@@ -301,12 +355,11 @@ function filtrarTabla() {
       <td><span class="envio-num">${r.envioAlternativo || '—'}</span></td>
       <td><a href="http://cpapibttv01:8080/SGREnvios/#/index/aplicar?Id=${r.envio}" target="_blank"><span class="envio-num">${r.envio}</span></a></td>
       <td>${progressHtml} <span style="color:green">${r.ambientes[r.ambientes.length - 1] || '—'}</span></td>
-      <td onclick="descargarEnvio(${r.envio})">
-      ${sqlsHtml}
-      </td>
+      <td><strong>${r.estado || '—'}</strong></td>
+      <td onclick = "descargarEnvio(${r.envio})">${sqlsHtml}</td>
       <td>${dropHtml}</td>
       <td>${createHtml}</td>
-    `;
+  `;
     tbody.appendChild(tr);
   }
 }
@@ -369,7 +422,7 @@ document.getElementById('btnBuscar')?.addEventListener('click', async () => {
   const ambientes = r.ambientes || [];
 
   const timeline = ambientes.map((amb, idx) => `
-      <div div class="timeline-step" >
+    < div div class="timeline-step" >
         <div class="timeline-circle">
             ${amb}
         </div>
@@ -377,16 +430,15 @@ document.getElementById('btnBuscar')?.addEventListener('click', async () => {
         <div class="timeline-label">
             ${amb}
         </div>
-    </div >
-
-      ${idx < ambientes.length - 1
+    </ >
+    ${idx < ambientes.length - 1
       ? '<div class="timeline-connector"></div>'
       : ''
     }
-    `).join('');
+  `).join('');
 
   document.getElementById("singleResult").innerHTML =
-    `<div class="envio-card" >
+    `< div class="envio-card" >
       <div class="envio-summary">
           <div class="envio-number">
               <div class="envio-icon">📦</div>
@@ -424,9 +476,6 @@ document.getElementById('btnBuscar')?.addEventListener('click', async () => {
               <div>
                   <span>Contenido</span>
                   <strong>${r.length ? r.sqls.map(x => `<span class="tag tag-ok">${x}</span>`).join(' ') : "Clases"}</strong>
-              ${console.log("Contenido:", r)}
-              ${console.log("Contenido:", r.sqls)}
-              ${console.log("Contenido:", r.sqlsHtml)}
               </div>
 
           </div>
@@ -458,5 +507,5 @@ document.getElementById('btnBuscar')?.addEventListener('click', async () => {
 
       </div>
 </div >
-  `;
+    `;
 });

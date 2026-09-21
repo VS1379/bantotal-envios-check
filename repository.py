@@ -77,6 +77,7 @@ def obtener_envio(numero):
 
     if (
         numero.startswith("413")
+        or numero.startswith("424")
         or numero.startswith("533")
         or numero.startswith("534")
         or numero.startswith("535")
@@ -88,7 +89,8 @@ def obtener_envio(numero):
             SELECT
                 E.EnvNro,
                 E.EnvIdAlternativo,
-                E.Zip
+                E.Zip,
+                E.EnvHab
             FROM Envios E
             WHERE E.EnvIdAlternativo = ?
             """,
@@ -102,7 +104,8 @@ def obtener_envio(numero):
             SELECT
                 E.EnvNro,
                 E.EnvIdAlternativo,
-                E.Zip
+                E.Zip,
+                E.EnvHab
             FROM Envios E
             WHERE E.EnvNro = ?
             """,
@@ -134,8 +137,9 @@ def obtener_envio(numero):
     conn.close()
 
     return {
-        "envio": env_nro,  # número real
+        "envio": env_nro,
         "envioAlternativo": row.EnvIdAlternativo,
         "zip": row.Zip,
         "ambientes": ambientes,
+        "estado": row.EnvHab,
     }

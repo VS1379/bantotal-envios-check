@@ -1,0 +1,20 @@
+directories:
+  output: dist-electron
+  buildResources: build
+appId: com.bse.envios
+productName: Analizador Envios
+files:
+  - filter:
+      - '**/*'
+      - '!dist/**'
+      - '!venv/**'
+      - '!__pycache__/**'
+asarUnpack:
+  - backend/**
+extraResources:
+  - from: backend
+    to: backend
+win:
+  target: nsis
+  icon: assets/envios-icon.ico
+electronVersion: 28.3.3

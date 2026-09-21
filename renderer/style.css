@@ -8,23 +8,55 @@
 }
 
 :root {
+  /* ── Tema oscuro ── */
   --bg: #0d0f14;
   --bg2: #13161e;
   --bg3: #1a1e29;
+
   --border: #252a38;
   --border2: #2e3547;
+
   --text: #e2e6f0;
   --text2: #7c8499;
   --text3: #4a5068;
+
   --accent: #00e5a0;
   --accent2: #00b87d;
+
   --warn: #f5a623;
   --danger: #ff4d6d;
   --info: #4d9fff;
+
+  --panel: #13161e;
+
   --mono: "IBM Plex Mono", monospace;
   --sans: "Syne", sans-serif;
+
   --radius: 6px;
   --sidebar-w: 200px;
+}
+
+/* ── Tema claro ── */
+body.light {
+  --bg: #f4f6f8;
+  --bg2: #ffffff;
+  --bg3: #eef1f5;
+
+  --border: #d9dee6;
+  --border2: #c5ccd6;
+
+  --text: #18202a;
+  --text2: #5d6878;
+  --text3: #8791a0;
+
+  --accent: #00a878;
+  --accent2: #008f68;
+
+  --warn: #d88900;
+  --danger: #dc3655;
+  --info: #1677c8;
+
+  --panel: #ffffff;
 }
 
 html,
@@ -731,7 +763,7 @@ textarea {
   width: 80px;
   height: 4px;
 
-  background: #16a34a;
+  background: var(--accent2);
 }
 
 .timeline-wrapper {
@@ -757,8 +789,7 @@ textarea {
 
   border-radius: 50%;
 
-  background: #16a34a;
-
+  background: var(--accent2);
   color: white;
 
   font-size: 28px;
@@ -786,17 +817,47 @@ textarea {
   width: 120px;
   height: 4px;
 
-  background: #16a34a;
+  background: var(--accent2);
 
   margin-bottom: 40px;
 }
 
 .table-link {
-  color: #4cc2ff;
+  color: var(--info);
   text-decoration: none;
   font-weight: 600;
 }
 
 .table-link:hover {
   text-decoration: underline;
+}
+
+/* ── Tema cambio ─────────────────────────────────────────── */
+
+.theme-toggle {
+  width: 100%;
+  padding: 9px 12px;
+
+  border-radius: var(--radius);
+  border: 1px solid var(--border2);
+
+  background: var(--bg3);
+  color: var(--text2);
+
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 500;
+
+  cursor: pointer;
+
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s;
+}
+
+.theme-toggle:hover {
+  background: var(--bg);
+  color: var(--text);
+  border-color: var(--accent2);
 }

@@ -61,6 +61,7 @@ def analizar_envio(envio_nro):
         "envio": envio_nro,
         "ticket": None,
         "progreso": 0,
+        "estado": None,
         "skipped": False,
         "sqls": [],
         "hasDrop": False,
@@ -94,6 +95,7 @@ def analizar_envio(envio_nro):
             "envioAlternativo": data["envioAlternativo"],
             "progreso": progreso,
             "ambientes": data["ambientes"],
+            "estado": data["estado"],
         }
 
     except Exception:
