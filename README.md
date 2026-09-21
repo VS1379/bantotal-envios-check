@@ -1,6 +1,6 @@
-# Analizador de Envíos — Bantotal SGR
+# Analizador de Envíos — Bantotal
 
-App desktop (Electron + Python + Playwright) para analizar envíos del SGR Bantotal.
+App desktop (Electron + Python + Playwright) para analizar envíos de Bantotal.
 
 ## Setup
 
